@@ -65,6 +65,8 @@ input[type=file]{ display:none; }
 <div class="container">
 <h2>NWT 5-Year Tracker</h2>
 <div class="stats" id="progressInfo">Loading…</div>
+<button id="installBtn" style="display:none;">Install App 📲</button>
+
 
 <div class="reading-card">
 <strong>Today’s Reading:</strong><br>
@@ -202,6 +204,20 @@ function importData(e){
 // ===== Init =====
 updateDisplay();
 </script>
+    <script>
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById("installBtn").style.display = "block";
+});
+
+document.getElementById("installBtn").addEventListener("click", () => {
+  deferredPrompt.prompt();
+});
+</script>
+
 </body>
 </html>
+
 
