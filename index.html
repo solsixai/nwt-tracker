@@ -65,7 +65,7 @@ input[type=file]{ display:none; }
 <div class="container">
 <h2>NWT 5-Year Tracker</h2>
 <div class="stats" id="progressInfo">Loading…</div>
-<button id="installBtn" style="display:none;">Install App 📲</button>
+
 
 
 <div class="reading-card">
@@ -80,7 +80,7 @@ input[type=file]{ display:none; }
 <button class="secondary" onclick="backupData()">Backup Progress</button>
 <button class="secondary" onclick="document.getElementById('importFile').click()">Import Backup</button>
 <input type="file" id="importFile" accept=".json" onchange="importData(event)">
-
+<button id="installBtn" style="display:none;">Install App 📲</button>
 <div class="history" id="logHistory">
 <h3>Completed Days</h3>
 </div>
@@ -219,5 +219,6 @@ document.getElementById("installBtn").addEventListener("click", () => {
 
 </body>
 </html>
+
 
 
