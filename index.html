@@ -4,69 +4,73 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NWT 5-Year Journey</title>
+
+<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#4a90e2">
-
 
 <style>
 :root { --primary:#4a90e2; --bg:#f4f7f6; --text:#333; }
 body {
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:var(--bg); color:var(--text);
-    margin:0; padding:20px; display:flex; justify-content:center;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg); color:var(--text);
+  margin:0; padding:20px;
+  display:flex; justify-content:center;
 }
 .container {
-    max-width:520px; width:100%;
-    background:white; padding:20px;
-    border-radius:15px;
-    box-shadow:0 4px 15px rgba(0,0,0,.1);
+  max-width:520px; width:100%;
+  background:white; padding:20px;
+  border-radius:15px;
+  box-shadow:0 4px 15px rgba(0,0,0,.1);
 }
 h2 { color:var(--primary); text-align:center; margin-bottom:5px; }
 .stats { text-align:center; font-size:.9em; color:#666; margin-bottom:15px; }
 
 .reading-card {
-    border-left:5px solid var(--primary);
-    padding:15px; background:#eef5ff;
-    border-radius:8px; margin-bottom:15px;
-    font-size:1.05em;
+  border-left:5px solid var(--primary);
+  padding:15px; background:#eef5ff;
+  border-radius:8px; margin-bottom:15px;
+  font-size:1.05em;
 }
 
 button {
-    background:var(--primary); color:white;
-    border:none; padding:12px;
-    border-radius:8px; width:100%;
-    font-size:16px; cursor:pointer;
-    margin-top:10px;
+  background:var(--primary); color:white;
+  border:none; padding:12px;
+  border-radius:8px; width:100%;
+  font-size:16px; cursor:pointer;
+  margin-top:10px;
 }
 button.secondary { background:#666; }
 button:active { opacity:.85; }
 
 textarea {
-    width:100%; height:90px;
-    border:1px solid #ddd;
-    border-radius:8px;
-    padding:10px; font-size:15px;
+  width:100%; height:90px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:10px; font-size:15px;
 }
 
-.history { margin-top:25px; border-top:1px solid #eee; padding-top:15px; }
+.history {
+  margin-top:25px;
+  border-top:1px solid #eee;
+  padding-top:15px;
+}
 .log-item {
-    border:1px solid #eee;
-    border-radius:8px;
-    padding:10px; margin-bottom:10px;
-    font-size:.9em;
+  border:1px solid #eee;
+  border-radius:8px;
+  padding:10px; margin-bottom:10px;
+  font-size:.9em;
 }
 .log-date { color:var(--primary); font-weight:bold; }
-.star { font-size:1.2em; margin-left:5px; }
 input[type=file]{ display:none; }
 </style>
 </head>
 
 <body>
 <div class="container">
+
 <h2>NWT 5-Year Tracker</h2>
 <div class="stats" id="progressInfo">Loading…</div>
-
-
 
 <div class="reading-card">
 <strong>Today’s Reading:</strong><br>
@@ -80,13 +84,16 @@ input[type=file]{ display:none; }
 <button class="secondary" onclick="backupData()">Backup Progress</button>
 <button class="secondary" onclick="document.getElementById('importFile').click()">Import Backup</button>
 <input type="file" id="importFile" accept=".json" onchange="importData(event)">
-<div class="history" id="logHistory">
+
+<!-- ✅ INSTALL BUTTON (OUTSIDE logHistory – IMPORTANT) -->
 <button id="installBtn" style="display:none;">
 Install App 📲
 </button>
 
+<div class="history" id="logHistory">
 <h3>Completed Days</h3>
 </div>
+
 </div>
 
 <script>
@@ -116,97 +123,100 @@ const TOTAL_DAYS = 1825;
 
 // ===== Helpers =====
 function getBookChapter(global) {
- let count=0;
- for (let [book,chap] of bibleBooks) {
-   if (global<=count+chap) return `${book} ${global-count}`;
-   count+=chap;
- }
- return "Finished 🎉";
+  let count = 0;
+  for (let [book,chap] of bibleBooks) {
+    if (global <= count + chap) return `${book} ${global - count}`;
+    count += chap;
+  }
+  return "Finished 🎉";
 }
 
 function getCurrentDay() {
- return Number(localStorage.getItem("currentDay")||1);
+  return Number(localStorage.getItem("currentDay") || 1);
 }
 
-// ===== Main Display =====
+// ===== Display =====
 function updateDisplay(){
- let day=getCurrentDay();
- const start=Math.floor((day-1)*(TOTAL_CHAPTERS/TOTAL_DAYS))+1;
- const end=Math.floor(day*(TOTAL_CHAPTERS/TOTAL_DAYS))+1;
+  let day = getCurrentDay();
+  const start = Math.floor((day-1)*(TOTAL_CHAPTERS/TOTAL_DAYS))+1;
+  const end = Math.floor(day*(TOTAL_CHAPTERS/TOTAL_DAYS))+1;
 
- document.getElementById("progressInfo").innerText =
- `Day ${day} of ${TOTAL_DAYS}`;
+  document.getElementById("progressInfo").innerText =
+    `Day ${day} of ${TOTAL_DAYS}`;
 
- document.getElementById("todayReading").innerText =
- `${getBookChapter(start)}${start!==end?" – "+getBookChapter(end):""}`;
+  document.getElementById("todayReading").innerText =
+    `${getBookChapter(start)}${start!==end ? " – "+getBookChapter(end) : ""}`;
 
- renderLogs();
+  renderLogs();
 }
 
 // ===== Completion =====
 function completeDay(){
- let logs=JSON.parse(localStorage.getItem("logs")||"[]");
- let day=getCurrentDay();
+  let logs = JSON.parse(localStorage.getItem("logs") || "[]");
+  let day = getCurrentDay();
 
- logs.unshift({
-   day,
-   date:new Date().toLocaleDateString(),
-   text:document.getElementById("dailyLog").value||"(No note)"
- });
+  logs.unshift({
+    day,
+    date:new Date().toLocaleDateString(),
+    text:document.getElementById("dailyLog").value || "(No note)"
+  });
 
- localStorage.setItem("logs",JSON.stringify(logs));
- localStorage.setItem("currentDay",day+1);
- document.getElementById("dailyLog").value="";
- updateDisplay();
+  localStorage.setItem("logs",JSON.stringify(logs));
+  localStorage.setItem("currentDay",day+1);
+  document.getElementById("dailyLog").value="";
+  updateDisplay();
 }
 
 // ===== Logs =====
 function renderLogs(){
- let logs=JSON.parse(localStorage.getItem("logs")||"[]");
- const div=document.getElementById("logHistory");
+  let logs = JSON.parse(localStorage.getItem("logs") || "[]");
+  const div = document.getElementById("logHistory");
 
- if(!logs.length){
-   div.innerHTML="<h3>Completed Days</h3><p>No days completed yet.</p>";
-   return;
- }
+  if(!logs.length){
+    div.innerHTML="<h3>Completed Days</h3><p>No days completed yet.</p>";
+    return;
+  }
 
- div.innerHTML="<h3>Completed Days</h3>"+logs.map(l=>`
- <div class="log-item">
- <span class="log-date">Day ${l.day} ⭐</span><br>
- ${l.text}
- </div>`).join("");
+  div.innerHTML="<h3>Completed Days</h3>"+logs.map(l=>`
+    <div class="log-item">
+      <span class="log-date">Day ${l.day} ⭐</span><br>
+      ${l.text}
+    </div>
+  `).join("");
 }
 
 // ===== Backup =====
 function backupData(){
- const data={
-   currentDay:getCurrentDay(),
-   logs:JSON.parse(localStorage.getItem("logs")||"[]")
- };
- const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
- const a=document.createElement("a");
- a.href=URL.createObjectURL(blob);
- a.download="nwt-reading-backup.json";
- a.click();
+  const data={
+    currentDay:getCurrentDay(),
+    logs:JSON.parse(localStorage.getItem("logs")||"[]")
+  };
+  const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="nwt-reading-backup.json";
+  a.click();
 }
 
 // ===== Import =====
 function importData(e){
- const file=e.target.files[0];
- if(!file) return;
- const reader=new FileReader();
- reader.onload=()=>{
-   const data=JSON.parse(reader.result);
-   localStorage.setItem("currentDay",data.currentDay);
-   localStorage.setItem("logs",JSON.stringify(data.logs));
-   updateDisplay();
- };
- reader.readAsText(file);
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const data=JSON.parse(reader.result);
+    localStorage.setItem("currentDay",data.currentDay);
+    localStorage.setItem("logs",JSON.stringify(data.logs));
+    updateDisplay();
+  };
+  reader.readAsText(file);
 }
 
 // ===== Init =====
 updateDisplay();
 </script>
+
+<!-- ===== INSTALL BUTTON LOGIC (ANDROID ONLY) ===== -->
 <script>
 let deferredPrompt;
 
@@ -216,7 +226,7 @@ window.addEventListener("beforeinstallprompt", (e) => {
   document.getElementById("installBtn").style.display = "block";
 });
 
-document.getElementById("installBtn").addEventListener("click", async () => {
+document.getElementById("installBtn").addEventListener("click", () => {
   if (!deferredPrompt) return;
   deferredPrompt.prompt();
   deferredPrompt = null;
@@ -225,7 +235,3 @@ document.getElementById("installBtn").addEventListener("click", async () => {
 
 </body>
 </html>
-
-
-
-
