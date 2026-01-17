@@ -2,28 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width, initial-scale=1, viewport-fit=cover">
-
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NWT 5-Year Journey</title>
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#4a90e2">
 
-<!-- iOS -->
+<!-- iOS support -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NWT Journey">
 
 <style>
-:root {
+:root{
   --primary:#4a90e2;
   --bg:#f4f7f6;
   --card:#ffffff;
   --text:#222;
 }
-body.dark {
+body.dark{
   --bg:#121212;
   --card:#1e1e1e;
   --text:#eee;
@@ -31,9 +29,9 @@ body.dark {
 
 body{
   margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   background:var(--bg);
   color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 }
 
 header{
@@ -44,7 +42,6 @@ header{
   padding:14px;
   text-align:center;
   font-weight:600;
-  z-index:10;
 }
 
 .container{
@@ -58,12 +55,12 @@ header{
   border-radius:14px;
   padding:15px;
   margin-bottom:15px;
-  box-shadow:0 4px 15px rgba(0,0,0,.08);
+  box-shadow:0 4px 15px rgba(0,0,0,.1);
 }
 
 .progress-bar{
   height:8px;
-  background:#ddd;
+  background:#ccc;
   border-radius:10px;
   overflow:hidden;
 }
@@ -80,7 +77,6 @@ button{
   border-radius:10px;
   font-size:16px;
   margin-top:10px;
-  cursor:pointer;
 }
 .primary{ background:var(--primary); color:white; }
 .secondary{ background:#666; color:white; }
@@ -90,7 +86,6 @@ textarea{
   height:90px;
   border-radius:10px;
   padding:10px;
-  font-size:15px;
 }
 
 .small{
@@ -103,9 +98,7 @@ textarea{
 
 <body>
 
-<header>
-📖 NWT 5-Year Journey
-</header>
+<header>📖 NWT 5-Year Journey</header>
 
 <div class="container">
 
@@ -118,21 +111,21 @@ textarea{
 </div>
 
 <div class="card">
-<strong>Today’s Reading</strong><br>
-<span id="todayReading"></span>
+  <strong>Today’s Scripture</strong><br>
+  <span id="todayReading"></span>
 </div>
 
 <div class="card">
-<label><strong>Meditation</strong></label>
-<textarea id="dailyLog" placeholder="What did you learn today?"></textarea>
-<button class="primary" onclick="completeDay()">Complete Today ⭐</button>
+  <strong>Meditation</strong>
+  <textarea id="note" placeholder="What did you learn today?"></textarea>
+  <button class="primary" onclick="completeToday()">Complete Today ⭐</button>
 </div>
 
 <div class="card">
-<button class="secondary" onclick="toggleDark()">🌙 Toggle Dark Mode</button>
-<button class="secondary" onclick="backupData()">⬇ Backup</button>
-<button class="secondary" onclick="document.getElementById('importFile').click()">⬆ Import</button>
-<input type="file" id="importFile" hidden accept=".json" onchange="importData(event)">
+  <button class="secondary" onclick="toggleDark()">🌙 Toggle Dark Mode</button>
+  <button class="secondary" onclick="backup()">⬇ Backup</button>
+  <button class="secondary" onclick="document.getElementById('file').click()">⬆ Import</button>
+  <input id="file" type="file" hidden accept=".json" onchange="importData(event)">
 </div>
 
 <button id="installBtn" class="primary" style="display:none">
@@ -142,73 +135,133 @@ Install App 📲
 </div>
 
 <script>
-// ===== CONSTANTS =====
-const TOTAL_CHAPTERS=1189;
-const TOTAL_DAYS=1825;
+/* ===================== CONFIG ===================== */
+const START_DATE = new Date("2026-01-01");   // 🔒 OFFICIAL START DATE
+const TOTAL_CHAPTERS = 1189;
+const TOTAL_DAYS = 1825;
 
-// ===== STREAK =====
-function updateStreak(){
-  let last=localStorage.getItem("lastDate");
-  let today=new Date().toDateString();
-  let streak=Number(localStorage.getItem("streak")||0);
+/* ===================== BIBLE ===================== */
+const bibleBooks = [
+ ["Genesis",50],["Exodus",40],["Leviticus",27],["Numbers",36],
+ ["Deuteronomy",34],["Joshua",24],["Judges",21],["Ruth",4],
+ ["1 Samuel",31],["2 Samuel",24],["1 Kings",22],["2 Kings",25],
+ ["1 Chronicles",29],["2 Chronicles",36],["Ezra",10],["Nehemiah",13],
+ ["Esther",10],["Job",42],["Psalms",150],["Proverbs",31],
+ ["Ecclesiastes",12],["Song of Solomon",8],["Isaiah",66],
+ ["Jeremiah",52],["Lamentations",5],["Ezekiel",48],["Daniel",12],
+ ["Hosea",14],["Joel",3],["Amos",9],["Obadiah",1],["Jonah",4],
+ ["Micah",7],["Nahum",3],["Habakkuk",3],["Zephaniah",3],
+ ["Haggai",2],["Zechariah",14],["Malachi",4],
+ ["Matthew",28],["Mark",16],["Luke",24],["John",21],
+ ["Acts",28],["Romans",16],["1 Corinthians",16],["2 Corinthians",13],
+ ["Galatians",6],["Ephesians",6],["Philippians",4],["Colossians",4],
+ ["1 Thessalonians",5],["2 Thessalonians",3],["1 Timothy",6],
+ ["2 Timothy",4],["Titus",3],["Philemon",1],["Hebrews",13],
+ ["James",5],["1 Peter",5],["2 Peter",3],
+ ["1 John",5],["2 John",1],["3 John",1],["Jude",1],["Revelation",22]
+];
 
-  if(last===today) return;
-  if(last===new Date(Date.now()-86400000).toDateString()){
-    streak++;
-  } else {
-    streak=1;
+function chapterToBook(ch){
+  let count=0;
+  for(let [book,c] of bibleBooks){
+    if(ch<=count+c) return `${book} ${ch-count}`;
+    count+=c;
   }
-  localStorage.setItem("streak",streak);
-  localStorage.setItem("lastDate",today);
-  document.getElementById("streak").innerText=streak;
+  return "Finished 🎉";
 }
 
-// ===== DARK MODE =====
+/* ===================== DATE LOGIC ===================== */
+function getDayNumber(){
+  const today = new Date();
+  return Math.floor((today - START_DATE)/86400000) + 1;
+}
+
+function getTodayReading(){
+  const day = getDayNumber();
+  const start = Math.floor((day-1)*(TOTAL_CHAPTERS/TOTAL_DAYS))+1;
+  const end = Math.floor(day*(TOTAL_CHAPTERS/TOTAL_DAYS))+1;
+
+  if(start > TOTAL_CHAPTERS) return "Bible Completed 🎉";
+
+  return start === end
+    ? chapterToBook(start)
+    : `${chapterToBook(start)} – ${chapterToBook(end)}`;
+}
+
+/* ===================== STREAK ===================== */
+function updateStreak(){
+  const today = new Date().toDateString();
+  let last = localStorage.getItem("last");
+  let streak = Number(localStorage.getItem("streak")||0);
+
+  if(last === today) return;
+  if(last === new Date(Date.now()-86400000).toDateString()) streak++;
+  else streak = 1;
+
+  localStorage.setItem("last",today);
+  localStorage.setItem("streak",streak);
+  document.getElementById("streak").innerText = streak;
+}
+
+/* ===================== UI ===================== */
+function updateUI(){
+  const day = getDayNumber();
+  document.getElementById("todayReading").innerText = getTodayReading();
+  document.getElementById("progressInfo").innerText = `Day ${day} of ${TOTAL_DAYS}`;
+  document.getElementById("progressBar").style.width = `${(day/TOTAL_DAYS)*100}%`;
+  document.getElementById("streak").innerText = localStorage.getItem("streak")||0;
+}
+
+/* ===================== ACTIONS ===================== */
+function completeToday(){
+  updateStreak();
+  localStorage.setItem("note-"+getDayNumber(), document.getElementById("note").value);
+  document.getElementById("note").value="";
+  updateUI();
+}
+
 function toggleDark(){
   document.body.classList.toggle("dark");
   localStorage.setItem("dark",document.body.classList.contains("dark"));
 }
 
-// ===== COMPLETE =====
-function completeDay(){
-  updateStreak();
-  let day=Number(localStorage.getItem("currentDay")||1);
-  localStorage.setItem("currentDay",day+1);
-  updateDisplay();
+function backup(){
+  const data={localStorage:{...localStorage}};
+  const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="nwt-backup.json";
+  a.click();
 }
 
-// ===== DISPLAY =====
-function updateDisplay(){
-  let day=Number(localStorage.getItem("currentDay")||1);
-  document.getElementById("progressInfo").innerText=
-  `Day ${day} of ${TOTAL_DAYS}`;
-
-  document.getElementById("progressBar").style.width=
-  `${(day/TOTAL_DAYS)*100}%`;
+function importData(e){
+  const r=new FileReader();
+  r.onload=()=>{
+    const data=JSON.parse(r.result).localStorage;
+    for(let k in data) localStorage.setItem(k,data[k]);
+    updateUI();
+  };
+  r.readAsText(e.target.files[0]);
 }
 
-if(localStorage.getItem("dark")==="true"){
-  document.body.classList.add("dark");
-}
-
-updateDisplay();
+/* ===================== INIT ===================== */
+if(localStorage.getItem("dark")==="true") document.body.classList.add("dark");
+updateUI();
 </script>
 
 <script>
-// INSTALL PROMPT
+/* INSTALL PROMPT */
 let deferredPrompt;
 window.addEventListener("beforeinstallprompt",e=>{
   e.preventDefault();
   deferredPrompt=e;
   installBtn.style.display="block";
 });
-installBtn.onclick=()=>{
-  deferredPrompt.prompt();
-};
+installBtn.onclick=()=>deferredPrompt.prompt();
 </script>
 
 <script>
-// SERVICE WORKER
+/* SERVICE WORKER */
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js");
 }
