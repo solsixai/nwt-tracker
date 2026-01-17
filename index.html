@@ -5,14 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NWT 5-Year Journey</title>
 
-<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#4a90e2">
 
-<!-- iOS support -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="NWT Journey">
 
 <style>
 :root{
@@ -26,30 +23,24 @@ body.dark{
   --card:#1e1e1e;
   --text:#eee;
 }
-
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   background:var(--bg);
   color:var(--text);
 }
-
 header{
-  position:sticky;
-  top:0;
   background:var(--primary);
   color:white;
   padding:14px;
   text-align:center;
   font-weight:600;
 }
-
 .container{
   max-width:520px;
   margin:auto;
   padding:15px;
 }
-
 .card{
   background:var(--card);
   border-radius:14px;
@@ -57,7 +48,6 @@ header{
   margin-bottom:15px;
   box-shadow:0 4px 15px rgba(0,0,0,.1);
 }
-
 .progress-bar{
   height:8px;
   background:#ccc;
@@ -67,9 +57,7 @@ header{
 .progress{
   height:100%;
   background:var(--primary);
-  width:0%;
 }
-
 button{
   width:100%;
   padding:14px;
@@ -80,18 +68,15 @@ button{
 }
 .primary{ background:var(--primary); color:white; }
 .secondary{ background:#666; color:white; }
-
 textarea{
   width:100%;
   height:90px;
   border-radius:10px;
   padding:10px;
 }
-
 .small{
   font-size:.85em;
-  opacity:.7;
-  text-align:center;
+  opacity:.75;
 }
 </style>
 </head>
@@ -116,9 +101,14 @@ textarea{
 </div>
 
 <div class="card">
-  <strong>Meditation</strong>
+  <strong>📝 Daily Reflection</strong>
   <textarea id="note" placeholder="What did you learn today?"></textarea>
-  <button class="primary" onclick="completeToday()">Complete Today ⭐</button>
+  <button class="primary" onclick="completeToday()">Save Reflection ⭐</button>
+</div>
+
+<div class="card">
+  <strong>📘 Previous Reflections</strong>
+  <div id="notesHistory" class="small"></div>
 </div>
 
 <div class="card">
@@ -135,12 +125,12 @@ Install App 📲
 </div>
 
 <script>
-/* ===================== CONFIG ===================== */
-const START_DATE = new Date("2026-01-01");   // 🔒 OFFICIAL START DATE
+/* ===== CONFIG ===== */
+const START_DATE = new Date("2026-01-01");
 const TOTAL_CHAPTERS = 1189;
 const TOTAL_DAYS = 1825;
 
-/* ===================== BIBLE ===================== */
+/* ===== BIBLE ===== */
 const bibleBooks = [
  ["Genesis",50],["Exodus",40],["Leviticus",27],["Numbers",36],
  ["Deuteronomy",34],["Joshua",24],["Judges",21],["Ruth",4],
@@ -163,61 +153,60 @@ const bibleBooks = [
 
 function chapterToBook(ch){
   let count=0;
-  for(let [book,c] of bibleBooks){
-    if(ch<=count+c) return `${book} ${ch-count}`;
+  for(let [b,c] of bibleBooks){
+    if(ch<=count+c) return `${b} ${ch-count}`;
     count+=c;
   }
   return "Finished 🎉";
 }
 
-/* ===================== DATE LOGIC ===================== */
+/* ===== DATE LOGIC ===== */
 function getDayNumber(){
-  const today = new Date();
-  return Math.floor((today - START_DATE)/86400000) + 1;
+  return Math.floor((new Date()-START_DATE)/86400000)+1;
 }
 
 function getTodayReading(){
-  const day = getDayNumber();
-  const start = Math.floor((day-1)*(TOTAL_CHAPTERS/TOTAL_DAYS))+1;
-  const end = Math.floor(day*(TOTAL_CHAPTERS/TOTAL_DAYS))+1;
-
-  if(start > TOTAL_CHAPTERS) return "Bible Completed 🎉";
-
-  return start === end
-    ? chapterToBook(start)
-    : `${chapterToBook(start)} – ${chapterToBook(end)}`;
+  const d=getDayNumber();
+  const s=Math.floor((d-1)*(TOTAL_CHAPTERS/TOTAL_DAYS))+1;
+  const e=Math.floor(d*(TOTAL_CHAPTERS/TOTAL_DAYS))+1;
+  if(s>TOTAL_CHAPTERS) return "Bible Completed 🎉";
+  return s===e ? chapterToBook(s) : `${chapterToBook(s)} – ${chapterToBook(e)}`;
 }
 
-/* ===================== STREAK ===================== */
+/* ===== STREAK ===== */
 function updateStreak(){
-  const today = new Date().toDateString();
-  let last = localStorage.getItem("last");
-  let streak = Number(localStorage.getItem("streak")||0);
-
-  if(last === today) return;
-  if(last === new Date(Date.now()-86400000).toDateString()) streak++;
-  else streak = 1;
-
-  localStorage.setItem("last",today);
-  localStorage.setItem("streak",streak);
-  document.getElementById("streak").innerText = streak;
+  const t=new Date().toDateString();
+  let l=localStorage.getItem("last");
+  let s=Number(localStorage.getItem("streak")||0);
+  if(l===t) return;
+  if(l===new Date(Date.now()-86400000).toDateString()) s++;
+  else s=1;
+  localStorage.setItem("last",t);
+  localStorage.setItem("streak",s);
 }
 
-/* ===================== UI ===================== */
-function updateUI(){
-  const day = getDayNumber();
-  document.getElementById("todayReading").innerText = getTodayReading();
-  document.getElementById("progressInfo").innerText = `Day ${day} of ${TOTAL_DAYS}`;
-  document.getElementById("progressBar").style.width = `${(day/TOTAL_DAYS)*100}%`;
-  document.getElementById("streak").innerText = localStorage.getItem("streak")||0;
+/* ===== NOTES ===== */
+function loadTodayNote(){
+  document.getElementById("note").value =
+    localStorage.getItem("note-"+getDayNumber()) || "";
 }
 
-/* ===================== ACTIONS ===================== */
+function renderNotes(){
+  let html="";
+  for(let i=getDayNumber(); i>0 && i>getDayNumber()-7; i--){
+    const n=localStorage.getItem("note-"+i);
+    if(n) html+=`<p><strong>Day ${i}:</strong><br>${n}</p>`;
+  }
+  document.getElementById("notesHistory").innerHTML =
+    html || "No reflections yet.";
+}
+
+/* ===== ACTIONS ===== */
 function completeToday(){
   updateStreak();
-  localStorage.setItem("note-"+getDayNumber(), document.getElementById("note").value);
-  document.getElementById("note").value="";
-  updateUI();
+  localStorage.setItem("note-"+getDayNumber(),
+    document.getElementById("note").value);
+  renderNotes();
 }
 
 function toggleDark(){
@@ -226,7 +215,7 @@ function toggleDark(){
 }
 
 function backup(){
-  const data={localStorage:{...localStorage}};
+  const data={...localStorage};
   const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
@@ -237,20 +226,33 @@ function backup(){
 function importData(e){
   const r=new FileReader();
   r.onload=()=>{
-    const data=JSON.parse(r.result).localStorage;
-    for(let k in data) localStorage.setItem(k,data[k]);
-    updateUI();
+    const d=JSON.parse(r.result);
+    for(let k in d) localStorage.setItem(k,d[k]);
+    init();
   };
   r.readAsText(e.target.files[0]);
 }
 
-/* ===================== INIT ===================== */
-if(localStorage.getItem("dark")==="true") document.body.classList.add("dark");
-updateUI();
+/* ===== UI ===== */
+function init(){
+  document.getElementById("todayReading").innerText=getTodayReading();
+  document.getElementById("progressInfo").innerText=
+    `Day ${getDayNumber()} of ${TOTAL_DAYS}`;
+  document.getElementById("progressBar").style.width=
+    `${(getDayNumber()/TOTAL_DAYS)*100}%`;
+  document.getElementById("streak").innerText=
+    localStorage.getItem("streak")||0;
+  loadTodayNote();
+  renderNotes();
+}
+
+if(localStorage.getItem("dark")==="true")
+  document.body.classList.add("dark");
+
+init();
 </script>
 
 <script>
-/* INSTALL PROMPT */
 let deferredPrompt;
 window.addEventListener("beforeinstallprompt",e=>{
   e.preventDefault();
@@ -261,7 +263,6 @@ installBtn.onclick=()=>deferredPrompt.prompt();
 </script>
 
 <script>
-/* SERVICE WORKER */
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js");
 }
