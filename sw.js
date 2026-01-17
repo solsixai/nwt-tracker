@@ -1,8 +1,6 @@
 self.addEventListener("install",e=>{
   e.waitUntil(
-    caches.open("nwt-app").then(cache=>{
-      return cache.addAll(["./"]);
-    })
+    caches.open("nwt-cache").then(c=>c.addAll(["./"]))
   );
 });
 
